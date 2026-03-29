@@ -1,0 +1,35 @@
+{
+  "name": "flow-architect-ai",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server.ts",
+    "start": "tsx server.ts",
+    "lint": "tsc --noEmit",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@google/genai": "latest",
+    "clsx": "^2.1.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "lucide-react": "^1.7.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "reactflow": "^11.10.1",
+    "tailwind-merge": "^3.5.0",
+    "tsx": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "terser": "^5.29.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8"
+  }
+}
