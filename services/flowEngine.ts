@@ -151,7 +151,24 @@ export class FlowEngine {
     return text.replace(/{{[\s]*([\w\.\-]+)[\s]*}}/g, (match, path) => {
       const val = this.getValueFromPath(path);
       if (val === undefined) return match;
-      return typeof val === 'object' ? JSON.stringify(val) : String(val);
+      
+      if (typeof val === 'object') {
+          return JSON.stringify(val);
+      }
+      
+      const strVal = String(val);
+      
+      // Verifica se a string original tem aspas antes ou depois do match
+      // Se tiver, significa que estamos substituindo dentro de uma string JSON
+      // e precisamos escapar as aspas e quebras de linha.
+      const index = text.indexOf(match);
+      if (index > 0 && text[index - 1] === '"') {
+          // Usa JSON.stringify para escapar corretamente e depois remove as aspas do início e fim
+          const escaped = JSON.stringify(strVal);
+          return escaped.substring(1, escaped.length - 1);
+      }
+      
+      return strVal;
     });
   }
 
@@ -164,7 +181,15 @@ export class FlowEngine {
         const val = this.getValueFromPath(path);
         return val !== undefined ? val : obj;
       }
-      return this.resolveVariables(obj);
+      
+      // Se não for um match exato, pode ter múltiplas variáveis ou texto misturado
+      // Não usamos this.resolveVariables aqui porque ele tenta escapar aspas duplas
+      // o que não é necessário quando estamos construindo um objeto que será stringificado depois.
+      return obj.replace(/{{[\s]*([\w\.\-]+)[\s]*}}/g, (match, path) => {
+        const val = this.getValueFromPath(path);
+        if (val === undefined) return match;
+        return typeof val === 'object' ? JSON.stringify(val) : String(val);
+      });
     } else if (Array.isArray(obj)) {
       return obj.map(item => this.resolveVariablesInObject(item));
     } else if (obj !== null && typeof obj === 'object') {
@@ -205,8 +230,16 @@ export class FlowEngine {
             // Resolve variáveis no corpo (seja string ou objeto)
             if (body) {
                 if (typeof body === 'string') {
-                    body = this.resolveVariables(body);
-                    try { body = JSON.parse(body); } catch (e) {}
+                    // Se o body é uma string (ex: JSON digitado manualmente), precisamos resolver as variáveis
+                    // Mas se tivermos HTML ou aspas duplas dentro das variáveis, um simples replace quebra o JSON.
+                    // A melhor forma é tentar fazer o parse primeiro, resolver como objeto e depois voltar para string.
+                    try {
+                        const parsedBody = JSON.parse(body);
+                        body = JSON.stringify(this.resolveVariablesInObject(parsedBody));
+                    } catch (e) {
+                        // Se não for um JSON válido, resolve como string normal
+                        body = this.resolveVariables(body);
+                    }
                 } else if (typeof body === 'object') {
                     body = this.resolveVariablesInObject(body);
                 }
